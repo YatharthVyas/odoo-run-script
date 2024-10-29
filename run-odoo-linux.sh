@@ -42,21 +42,36 @@ read -p "Do you want to run the enterprise source code? (y/n) " -n 1 -r
 echo
 if [[ $REPLY =~ ^[Yy]$ ]];
 then
-    enterprise_fetched = false
-    while [ $enterprise_fetched = false ]; do
+    enterprise_fetched=false
+    while [ "$enterprise_fetched" = false ]; do
         read -p "Please enter your Odoo Enterprise Username: " username
+        echo
+        echo "You will be prompted to enter your password."
+        echo "Please note that the password is $(tput bold)not same as$(tput sgr0) your Github password"
+        BLUE='\033[0;34m'
+        NC='\033[0m'
+        echo -e " 1. You must visit ${BLUE}https://github.com/settings/tokens/new${NC} to generate a new token"
+        echo " 2. Make sure to select the 'repo' scope while generating the token"
+        echo
+        read -p "If you do not have an existing access token, Would you like to create one? (y/n)" -n 1 -r
+        echo
+        if [[ $REPLY =~ ^[Yy]$ ]]; then
+            sudo -u $USER xdg-open "https://github.com/settings/tokens/new" # @todo: Fix this not opening browser
+            echo -e "Please visit this link: ${BLUE}https://github.com/settings/tokens/new${NC} to generate a new token" # fallback if above fails
+        fi
+
         if [ -d "enterprise" ]; then
             echo "Using Existing Odoo Enterprise Source Code"
             cd enterprise
-            git pull 'https://' + $username + '@github.com/odoo/enterprise.git'
+            git pull "https://${username}@github.com/odoo/enterprise.git"
         else
             echo "Fetching Odoo Enterprise Source Code"
-            git clone 'https://' + $username + '@github.com/odoo/enterprise.git'
+            git clone "https://${username}@github.com/odoo/enterprise.git"
         fi
 
         # Check the exit status to know if previous command was successful
         if [ $? -eq 0 ]; then
-            enterprise_fetched = true
+            enterprise_fetched=true
         else
             echo "Invalid Username. Please try again."
         fi
